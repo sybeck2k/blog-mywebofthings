@@ -8,10 +8,10 @@ Paginate = 3
 
 [params]
   description = "Minimalist theme for Hugo"
-  dateFormat = "2006, Jan 2"
-  copyrightOwner = "MunifTanjim"
+  dateFormat = "2 Jan 2006"
+  copyrightOwner = "Roberto Migli"
   copyrightStartYear = "2017"
-  hideSingleNavigation = false
+  hideSingleNavigation = true
 
 [params.opengraph]
   [params.opengraph.facebook]
