@@ -1,17 +1,43 @@
 baseURL = "https://blog.mywebofthings.com"
-title = "Minimo"
+title = "A blog of tech"
 
-theme = "minimo"
+theme = "coco"
 
-googleAnalytics = ""
+googleAnalytics = "UA-100840815-1"
 Paginate = 3
 
+pygmentsuseclasses  = true
+disqusshortname     = "mywebofthings"
+
+[permalinks]
+fixed = ":title/"
+blog  = "blog/:slug/"
+
+[[menu.main]]
+name                   = "Blog"
+weight                 = -120
+identifier             = "blog"
+url                    = "/blog/"
+
+[[menu.main]]
+name                   = "About"
+weight                 = -110
+identifier             = "about"
+url                    = "/about/"
+
 [params]
-  description = "Minimalist theme for Hugo"
-  dateFormat = "2 Jan 2006"
+  dateForm = "2 Jan 2006"
   copyrightOwner = "Roberto Migli"
   copyrightStartYear = "2017"
   hideSingleNavigation = true
+  highlightjs            = true
+  linkedin               = "//linkedin.com/in/robertomigli"
+  github                 = "//github.com/sybeck2k"
+  twitter                = "//twitter.com/luominli"
+  selfintro              = "Ideas, thoughts and rants about code and systems"  
+  highlightjsStyle     = "darcula"
+  avatar                 = "img/profile.png"
+  author = "Roberto Migli"
 
 [params.opengraph]
   [params.opengraph.facebook]
@@ -22,18 +48,8 @@ Paginate = 3
   category = "categories"
   tag = "tags"
 
-[social]
-  facebook = ""
-
 [author]
   name = "Roberto Migli"
-
-[author.social]
-  github = "sybeck2k"
-  twitter = "LuominLi"
-
-[permalinks]
-  page = "/:slug/"
 
 [[menu.main]]
   name = "Home"

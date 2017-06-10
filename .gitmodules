@@ -4,3 +4,6 @@
 [submodule "themes/minimo"]
 	path = themes/minimo
 	url = https://github.com/MunifTanjim/minimo
+[submodule "themes/coco"]
+	path = themes/coco
+	url = https://github.com/nishanths/cocoa-hugo-theme.git

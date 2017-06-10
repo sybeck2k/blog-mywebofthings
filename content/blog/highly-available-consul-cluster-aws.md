@@ -2,26 +2,43 @@
 date = "2017-06-10T16:53:02+02:00"
 tags = ["aws", "consul", "high-availability"]
 title = "Deploying a highly available, dual AZ Consul cluster on AWS"
-draft = true
+draft = false
 +++
 
 Deploying an highly available Consul cluster on AWS seems to be quite straightforward. There is also a [CloudFormation template](https://aws.amazon.com/quickstart/architecture/consul/) available from the AWS team. The only issue is that the reference architecture requires 3 Availability Zones.
 
-What about deploying on a dual-AZ? That might be the only option in some zones such as Frankfurt, Sydney or Tokyo.
+What about dual-AZ deployments? That might be the only option in some zones such as Frankfurt, Sydney or Tokyo.
+<!--more-->
+
+
+The Problem
+------
+
+The problem in those cases is that, if we deploy in both AZ as if it were one, and we lose one AZ, then the whole Consul cluster might be unavailable. In fact, leader election requires a quorum. The quorum is equal to `n/2 + 1` - that is, half of the servers + 1 must agree to who is the leader (if you want to know more about Raft, the protocol used by Consul to achieve distributed consensus, I recommend taking a look at this [great animation explaining the details](http://thesecretlivesofdata.com/raft/)).
+
+Let's assume we deploy a Consul cluster of 5 servers distributed on 2 AZ. If the AZ that holds the minority of the nodes (2) fails, then the other AZ will keep working. But what if the majority AZ fails? The minority AZ will not be able to achieve consenus, and will become _unavailable_.
+
 We will show how to leverage the WAN Gossip pool to isolate the AZs failure zones.
 At the end of the article, you will have a resiliant Consul cluster that can sustain the loss of up to 1 server, or 1 entire AZ.
-<!--more-->
+
+
+WAN Peering to the rescue
+------
 
 So, why do we use WAN peering? From [Consul documentation](https://www.consul.io/docs/guides/datacenters.html):
 
 > One of the key features of Consul is its support for multiple datacenters. The architecture of Consul is designed to promote a low coupling of datacenters so that connectivity issues or failure of any datacenter does not impact the availability of Consul in other datacenters. This means each datacenter runs independently, each having a dedicated group of servers and a private LAN gossip pool.
 
-In other words, we will map one Availability Zone to 1 Datacenter.
+In other words, we can use WAN peering to map one Availability Zone to 1 Datacenter.
+
+
+A practical example
+------
 
 Here is an architecture diagram of what we will deploy:
 ![Consul Dual AZ](/img/consul-ha/consul-cluster-dual-AZ.png)
 
-To deploy the solution, we'll use [Terraform](https://www.terraform.io/), the code is available on [Github](), and it's a fork of the original article '[Creating a Resilient Consul Cluster for Docker Microservice Discovery with Terraform and AWS](http://www.dwmkerr.com/creating-a-resilient-consul-cluster-for-docker-microservice-discovery-with-terraform-and-aws/)'.
+To deploy the solution, we'll use [Terraform](https://www.terraform.io/), the code is available on [Github](https://github.com/sybeck2k/terraform-consul-cluster/tree/consul-ha), and it's a fork of the original article '[Creating a Resilient Consul Cluster for Docker Microservice Discovery with Terraform and AWS](http://www.dwmkerr.com/creating-a-resilient-consul-cluster-for-docker-microservice-discovery-with-terraform-and-aws/)'.
 
 In short, here is what the Terraform code does:
 
@@ -71,54 +88,60 @@ Let's run our Terraform configuration in `eu-west-1`:
 
 Everything good here! Let's try to connect to one instance. We get first all the instances in the first AZ:
 
-    [~]$ INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --region eu-west-1 --auto-scaling-group-names consul-server-asg-a | jq -r '.AutoScalingGroups | .[].Instances | .[0].InstanceId')'
+~~~sh
+$ INSTANCE_ID=$(aws autoscaling describe-auto-scaling-groups --region eu-west-1 --auto-scaling-group-names consul-server-asg-a | jq -r '.AutoScalingGroups | .[].Instances | .[0].InstanceId')'
+~~~
 
 And we connect to one:
     
+~~~sh
+$ CONSUL_SERVER_IP=$(aws ec2 describe-instances --region eu-west-1 --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text --instance-ids $INSTANCE_ID)
+$ ssh ec2-user@$CONSUL_SERVER_IP
+~~~
 
-    [~]$ CONSUL_SERVER_IP=$(aws ec2 describe-instances --region eu-west-1 --query 'Reservations[*].Instances[*].[PublicIpAddress]' --output text --instance-ids $INSTANCE_ID)
-    [~]$ ssh ec2-user@$CONSUL_SERVER_IP
+Let's take a look at the WAN cluster:
 
-And let's take a look at the WAN cluster:
-
-    $ consul members -wan
-	Node                            Address          Status  Type    Build  Protocol  DC
-	i-014851c6e04ab2345.eu-west-1b  10.0.1.175:8302  alive   server  0.8.3  2         eu-west-1b
-	i-03a69a2514d74d1ad.eu-west-1b  10.0.1.218:8302  alive   server  0.8.3  2         eu-west-1b
-	i-094636fb7bc5e6847.eu-west-1a  10.0.1.8:8302    alive   server  0.8.3  2         eu-west-1a
-	i-0b5bf7b0011979a88.eu-west-1a  10.0.1.111:8302  alive   server  0.8.3  2         eu-west-1a
-	i-0d44013c06207303c.eu-west-1b  10.0.1.221:8302  alive   server  0.8.3  2         eu-west-1b
-	i-0f89b2eb8790d6e54.eu-west-1a  10.0.1.20:8302   alive   server  0.8.3  2         eu-west-1a
+~~~sh
+$ consul members -wan
+Node                            Address          Status  Type    Build  Protocol  DC
+i-014851c6e04ab2345.eu-west-1b  10.0.1.175:8302  alive   server  0.8.3  2         eu-west-1b
+i-03a69a2514d74d1ad.eu-west-1b  10.0.1.218:8302  alive   server  0.8.3  2         eu-west-1b
+i-094636fb7bc5e6847.eu-west-1a  10.0.1.8:8302    alive   server  0.8.3  2         eu-west-1a
+i-0b5bf7b0011979a88.eu-west-1a  10.0.1.111:8302  alive   server  0.8.3  2         eu-west-1a
+i-0d44013c06207303c.eu-west-1b  10.0.1.221:8302  alive   server  0.8.3  2         eu-west-1b
+i-0f89b2eb8790d6e54.eu-west-1a  10.0.1.20:8302   alive   server  0.8.3  2         eu-west-1a
+~~~
 
 There we go - 2 Consul cluster connected to each other. As you can see, the DC name maps to the AZ name.
 
 Let's also try the *DNS interface*:
 
-	$ dig i-0d44013c06207303c.node.eu-west-1b.consul
+~~~sh
+$ dig i-0d44013c06207303c.node.eu-west-1b.consul
 
-	; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.55.amzn1 <<>> i-0d44013c06207303c.node.eu-west-1b.consul
-	;; global options: +cmd
-	;; Got answer:
-	;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 40507
-	;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+; <<>> DiG 9.8.2rc1-RedHat-9.8.2-0.62.rc1.55.amzn1 <<>> i-0d44013c06207303c.node.eu-west-1b.consul
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 40507
+;; flags: qr aa rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
 
-	;; QUESTION SECTION:
-	;i-0d44013c06207303c.node.eu-west-1b.consul. IN A
+;; QUESTION SECTION:
+;i-0d44013c06207303c.node.eu-west-1b.consul. IN A
 
-	;; ANSWER SECTION:
-	i-0d44013c06207303c.node.eu-west-1b.consul. 0 IN A 10.0.1.221
+;; ANSWER SECTION:
+i-0d44013c06207303c.node.eu-west-1b.consul. 0 IN A 10.0.1.221
 
-	;; Query time: 3 msec
-	;; SERVER: 10.0.1.8#53(10.0.1.8)
-	;; WHEN: Fri Jun  9 14:37:52 2017
-	;; MSG SIZE  rcvd: 76
+;; Query time: 3 msec
+;; SERVER: 10.0.1.8#53(10.0.1.8)
+;; WHEN: Fri Jun  9 14:37:52 2017
+;; MSG SIZE  rcvd: 76
+~~~
 
+You can try to do the same queries on any of the other AZ's server. 
 
-You can try to do the same queries on the other AZ's server. 
+If you check CloudWatch Logs, you will find all the consul logs, one per instance:
 
-If you check CloudWatch Logs, you will find all the consul logs:
+![CloudWatch Consul logs](/img/consul-ha/cloudwatch-consul-logs.png)
 
-![CloudWatch Consul logs](img/consul-ha/cloudwatch-consul-logs.png)
-
-Finally, remember that there *KV stores are isolated*: since each AZ is a possible failure zone, data written in one AZ Consul cluster will not be copied over to the other cluster. You can do so using tools like [Consul Replicate](https://github.com/hashicorp/consul-replicate).
+Finally, remember that the ***KV stores are isolated***: since each AZ is a possible failure zone, data written in one AZ Consul cluster will not be copied over to the other cluster. You can do so using tools like [Consul Replicate](https://github.com/hashicorp/consul-replicate).
 
