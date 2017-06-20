@@ -12,7 +12,6 @@ What about dual-AZ deployments? That might be the only option in some zones such
 
 
 The Problem
-------
 
 The problem in those cases is that, if we deploy in both AZ as if it were one, and we lose one AZ, then the whole Consul cluster might be unavailable. In fact, leader election requires a quorum. The quorum is equal to `n/2 + 1` - that is, half of the servers + 1 must agree to who is the leader (if you want to know more about Raft, the protocol used by Consul to achieve distributed consensus, I recommend taking a look at this [great animation explaining the details](http://thesecretlivesofdata.com/raft/)).
 
