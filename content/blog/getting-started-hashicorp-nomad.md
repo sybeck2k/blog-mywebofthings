@@ -119,4 +119,4 @@ And see all the clients connected (which are in our configuration 11, distribute
 
 And, under the hood, also the Consul cluster is up and running.
 
-So, we now have a job scheduler (Nomad) and a highly-available service-discovery backbone (Consul). In the next blog article I'll show you how to execute tasks on our new cluster, and then we will try to break some things up and see how Nomad reacts: there are plenty of questions that can be answered only through experimentation (or going through the source code :p!).
+So, we now have a job scheduler (Nomad) and a highly-available service-discovery backbone (Consul). In the [next blog article](/blog/launching-your-first-job-with-hasicorps-nomad/) I'll show you how to execute tasks on our new cluster, and then we will try to break some things up and see how Nomad reacts: there are plenty of questions that can be answered only through experimentation (or going through the source code :p!).

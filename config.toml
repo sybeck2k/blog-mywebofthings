@@ -35,7 +35,7 @@ url                    = "/about/"
   github                 = "//github.com/sybeck2k"
   twitter                = "//twitter.com/luominli"
   selfintro              = "Ideas, thoughts and rants about code and systems"  
-  highlightjsStyle       = "darcula"
+  highlightjsStyle       = "solarized-dark"
   avatar                 = "img/profile.png"
   author = "Roberto Migli"
 
