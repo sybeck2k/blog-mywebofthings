@@ -1,0 +1,12 @@
+on:
+  tags: true
+language: go
+install: go get -v github.com/spf13/hugo
+script:
+  - hugo
+  - sudo pip install awscli
+  - aws configure set preview.cloudfront true
+  - ./deploy.sh
+notifications:
+    email:
+        on_failure: always

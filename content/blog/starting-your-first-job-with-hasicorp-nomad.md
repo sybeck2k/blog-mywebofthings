@@ -2,7 +2,7 @@
 date = "2017-06-25T20:30:26+02:00"
 title = "Launching your first job with Hasicorp's Nomad"
 tags = ["aws", "consul", "nomad"]
-draft = true
+draft = false
 +++
 
 In this article we will deploy a few [Nomad](https://nomadproject.io/) jobs on a small dual-DC cluster. In the [previous blog article](https://blog.mywebofthings.com/blog/getting-started-with-hashicorp-nomad/) you can find a walkthrough and a Terraform script to deploy the cluster. The following examples are based on the architecture schema of the previous article.
@@ -83,9 +83,9 @@ There are a few important things to notice here:
 If we inspect the container, we can see more interesting facts. Let's focus first on performance constraints:
 
     $ docker inspect -f '{{ .HostConfig.CpuShares }}' 5f5525256ddc
-  	500
+    500
     $ docker inspect -f '{{ .HostConfig.Memory }}' 5f5525256ddc
-  	268435456
+    268435456
 
 Nomad translated the job configuration into [Docker resource constraints](https://docs.docker.com/engine/admin/resource_constraints/#cpu). Here is the relevant job configuration:
 
