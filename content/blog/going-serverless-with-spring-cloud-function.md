@@ -1,7 +1,7 @@
 +++
 date = "2017-08-09T11:36:14+02:00"
 title = "Going Serverless with Spring Cloud Function"
-draft = true
+draft = false
 +++
 
 Serverless architectures are on the raise. Why? Well, if you deal with applications that have dynamic loads, a micro-service oriented architecture and you want to reduce to (almost) 0 operational costs, going serverless sounds pretty interesting. But what does it means _serverless_? It just means that instead of installing and deploying your application on a VM or a Docker container, you send the packaged application to a serverless provider, and hop - you have your application up and running somewhere, somehow. The magic behind instance provisioning, high-availability and deployment are provided for you.
