@@ -1,10 +1,11 @@
-+++
-title = "AWS re:Invent 2017 Day 2"
-date = 2017-11-29T16:44:52+01:00
-description = "Here is the recap of my 2nd day at AWS:reInvent 2017"
-tags = ["aws", "reinvent"]
-draft = false
-+++
+---
+title: AWS re:Invent 2017 Day 2
+date: 2017-11-29T16:44:52+01:00
+description: Here is the recap of my 2nd day at AWS:reInvent 2017
+tags: ["aws", "reinvent"]
+draft: false
+typora-root-url: ../../static
+---
 
 Here is the recap of my 2nd day at AWS:reInvent 2017. 
 
